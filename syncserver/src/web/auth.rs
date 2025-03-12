@@ -26,8 +26,11 @@ use super::{
     error::{HawkErrorKind, ValidationErrorKind},
     extractors::RequestErrorLocation,
 };
-use crate::{error::{ApiErrorKind, ApiResult}, server::ReverseProxyState};
 use crate::label;
+use crate::{
+    error::{ApiErrorKind, ApiResult},
+    server::ReverseProxyState,
+};
 
 /// A parsed and authenticated JSON payload
 /// extracted from the signed `id` property
@@ -198,7 +201,15 @@ impl HawkPayload {
             Utc::now().timestamp() as u64
         };
 
-        HawkPayload::new(header, method, (reverse_proxy_state.get_webroot() + path.as_str()).as_str(), host, port, secrets, expiry)
+        HawkPayload::new(
+            header,
+            method,
+            (reverse_proxy_state.get_webroot() + path.as_str()).as_str(),
+            host,
+            port,
+            secrets,
+            expiry,
+        )
     }
 }
 

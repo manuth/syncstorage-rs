@@ -71,13 +71,13 @@ pub struct ServerState {
 /// This state object will be made available to all HTTP API calls.
 pub struct ReverseProxyState {
     /// public facing URL of the server
-    pub public_url: Option<String>
+    pub public_url: Option<String>,
 }
 
 impl ReverseProxyState {
     pub fn from_settings(settings: &Settings) -> ReverseProxyState {
         ReverseProxyState {
-            public_url: settings.public_url.clone()
+            public_url: settings.public_url.clone(),
         }
     }
 
@@ -86,8 +86,8 @@ impl ReverseProxyState {
             None => "".to_owned(),
             Some(url) => match url.parse::<Uri>() {
                 Err(_) => "".to_owned(),
-                Ok(uri) => uri.path().to_owned()
-            }
+                Ok(uri) => uri.path().to_owned(),
+            },
         }
     }
 }

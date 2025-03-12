@@ -34,7 +34,6 @@ use syncstorage_db::{
 use tokenserver_auth::TokenserverOrigin;
 use validator::{Validate, ValidationError};
 
-use crate::{error::{ApiError, ApiErrorKind}, server::ReverseProxyState};
 use crate::label;
 use crate::server::{MetricsWrapper, ServerState, BSO_ID_REGEX, COLLECTION_ID_REGEX};
 use crate::web::{
@@ -42,6 +41,10 @@ use crate::web::{
     error::{HawkErrorKind, ValidationErrorKind},
     transaction::DbTransactionPool,
     DOCKER_FLOW_ENDPOINTS,
+};
+use crate::{
+    error::{ApiError, ApiErrorKind},
+    server::ReverseProxyState,
 };
 const BATCH_MAX_IDS: usize = 100;
 
@@ -1094,7 +1097,14 @@ impl HawkIdentifier {
         uri: &Uri,
         exts: &mut Extensions,
     ) -> Result<Self, Error> {
-        let payload = HawkPayload::extrude(header, method, &reverse_proxy_state, secrets, connection_info, uri)?;
+        let payload = HawkPayload::extrude(
+            header,
+            method,
+            &reverse_proxy_state,
+            secrets,
+            connection_info,
+            uri,
+        )?;
         let puid = Self::uid_from_path(uri)?;
         if payload.user_id != puid {
             warn!("⚠️ Hawk UID not in URI: {:?} {:?}", payload.user_id, uri);
@@ -1149,13 +1159,15 @@ impl FromRequest for HawkIdentifier {
         let connection_info = req.connection_info().clone();
         let method = req.method().clone();
 
-        let reverse_proxy_state: &ReverseProxyState = match &req.app_data::<Data<ReverseProxyState>>() {
-            Some(data) => data,
-            None => {
-                let err: ApiError = ApiErrorKind::Internal("No app_data ReverseProxyState".to_owned()).into();
-                return future::ready(Err(err.into()));
-            }
-        };
+        let reverse_proxy_state: &ReverseProxyState =
+            match &req.app_data::<Data<ReverseProxyState>>() {
+                Some(data) => data,
+                None => {
+                    let err: ApiError =
+                        ApiErrorKind::Internal("No app_data ReverseProxyState".to_owned()).into();
+                    return future::ready(Err(err.into()));
+                }
+            };
 
         // Tried collapsing this to a `.or_else` and hit problems with the return resolving
         // to an appropriate error state. Can't use `?` since the function does not return a result.
@@ -1167,7 +1179,14 @@ impl FromRequest for HawkIdentifier {
             }
         };
 
-        let result = Self::extrude(&req, method.as_str(), uri, &connection_info, &reverse_proxy_state, secrets);
+        let result = Self::extrude(
+            &req,
+            method.as_str(),
+            uri,
+            &connection_info,
+            &reverse_proxy_state,
+            secrets,
+        );
 
         if let Ok(ref hawk_id) = result {
             // Store the origin of the token as an extra to be included when emitting a Sentry error
@@ -1814,9 +1833,7 @@ mod tests {
     }
 
     fn make_reverse_proxy_state() -> ReverseProxyState {
-        ReverseProxyState {
-            public_url: None
-        }
+        ReverseProxyState { public_url: None }
     }
 
     fn extract_body_as_str(sresponse: ServiceResponse) -> String {
