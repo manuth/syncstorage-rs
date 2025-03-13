@@ -156,7 +156,7 @@ fn create_request(
             create_hawk_header(
                 method.as_str(),
                 settings.port,
-                &(ReverseProxyState::from_settings(&settings).get_webroot() + path),
+                &(ReverseProxyState::from_settings(settings).get_webroot() + path),
             ),
         ))
         .insert_header(("Accept", "application/json"))

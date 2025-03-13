@@ -1100,7 +1100,7 @@ impl HawkIdentifier {
         let payload = HawkPayload::extrude(
             header,
             method,
-            &reverse_proxy_state,
+            reverse_proxy_state,
             secrets,
             connection_info,
             uri,
@@ -1184,7 +1184,7 @@ impl FromRequest for HawkIdentifier {
             method.as_str(),
             uri,
             &connection_info,
-            &reverse_proxy_state,
+            reverse_proxy_state,
             secrets,
         );
 
